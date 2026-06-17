@@ -11,6 +11,7 @@ import helmet from 'helmet';
 
 import usuariosRoutes from './src/routes/usuariosRoutes.js';
 import tarefasRoutes from './src/routes/tarefasRoutes.js';
+import demandasRoutes from './src/routes/demandasRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -38,7 +39,8 @@ app.use(express.json());
 // cada grupo de rotas é montado sob um prefixo
 // /usuarios cobre: cadastro, login, perfil e o CRUD de usuários.
 app.use('/usuarios', usuariosRoutes);
-app.use('/tarefas', tarefasRoutes);  // CRUD de tarefas (protegido por JWT)
+app.use('/tarefas', tarefasRoutes);
+app.use('/demandas', demandasRoutes);  // CRUD de tarefas (protegido por JWT)
 
 // rota raiz só para health-check rápido no navegador
 app.get('/', (req, res) => {
@@ -49,7 +51,8 @@ app.get('/', (req, res) => {
       'POST /usuarios/login',
       'GET  /usuarios/perfil',
       '/usuarios',
-      '/tarefas'
+      '/tarefas',
+      '/demandas'
     ]
   });
 });
