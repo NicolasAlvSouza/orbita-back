@@ -11,6 +11,8 @@ import helmet from 'helmet';
 
 import usuariosRoutes from './src/routes/usuariosRoutes.js';
 import demandasRoutes from './src/routes/demandasRoutes.js';
+import produtosRoutes from './src/routes/produtosRoutes.js';
+import demandaProdutoRoutes from './src/routes/demandaProdutoRoutes.js'
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -39,6 +41,8 @@ app.use(express.json());
 // /usuarios cobre: cadastro, login, perfil e o CRUD de usuários.
 app.use('/usuarios', usuariosRoutes);
 app.use('/demandas', demandasRoutes);  // CRUD de tarefas (protegido por JWT)
+app.use('/produtos', produtosRoutes);
+app.use('/demandaProduto', demandaProdutoRoutes)
 
 // rota raiz só para health-check rápido no navegador
 app.get('/', (req, res) => {
@@ -49,7 +53,9 @@ app.get('/', (req, res) => {
       'POST /usuarios/login',
       'GET  /usuarios/perfil',
       '/usuarios',
-      '/demandas'
+      '/demandas',
+      '/produtos',
+      '/demandaProduto'
     ]
   });
 });
