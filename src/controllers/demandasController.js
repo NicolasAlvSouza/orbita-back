@@ -107,6 +107,7 @@ export async function atualizar(req, res) {
     return res.status(403).json({
       mensagem: 'Você só pode editar suas próprias demandas.'
     });
+  }
 
   const {
     nome_cliente,
