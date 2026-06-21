@@ -77,7 +77,7 @@ export async function criar(req, res) {
       `
       INSERT INTO usuarios (nome, email, senha)
       VALUES ($1, $2, $3)
-      RETURNINGid, nome, email, foto`,[
+      RETURNING id, nome, email, foto`,[
         nome,
         email,
         senhaHash
