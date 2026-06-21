@@ -60,7 +60,7 @@ export async function buscarPorId(req, res) {
 }
 
 export async function criar(req, res) {
-  const {nome_cliente, descricao, prioridade, status} = req.body;
+  const {id_usuario, nome_cliente, descricao, prioridade, status} = req.body;
 
   if (!nome_cliente) {
     return res.status(400).json({
@@ -72,9 +72,10 @@ export async function criar(req, res) {
     const db = await getDatabase();
 
     const resultado = await db.get(
-      `INSERT INTO demandas (nome_cliente, descricao, prioridade, status)
-       VALUES ($1, $2, $3, $4)`,
+      `INSERT INTO demandas (id_usuario, nome_cliente, descricao, prioridade, status)
+       VALUES ($1, $2, $3, $4, $5)`,
       [
+        id_usuario,
         nome_cliente,
         descricao,
         prioridade || 'Média',
