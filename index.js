@@ -54,6 +54,7 @@ app.get('/', (req, res) => {
       'GET  /usuarios/perfil',
       '/usuarios',
       '/demandas',
+      '/tarefas',
       
       '/produtos',
       '/demandaProduto'
