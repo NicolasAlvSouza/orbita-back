@@ -75,90 +75,116 @@ export async function criar(req, res) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('demandas')
-      .insert([
-        {
-          id_usuario,
-          nome_cliente,
-          descricao,
-          prioridade: prioridade || 'Média',
-          status: status || 'Pendente'
-        }
-      ])
-      .select()
-      .single();
+    const db = await getDatabase();
 
-    if (error) {
-      console.error('[supabase.criar]', error);
-      return res.status(400).json({
-        mensagem: error.message
-      });
-    }
+    const resultado = await db.run(
+      `INSERT INTO demandas
+       (id_usuario, nome_cliente, descricao, prioridade, status)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [
+        id_usuario,
+        nome_cliente,
+        descricao,
+        prioridade || 'Média',
+        status || 'Pendente'
+      ]
+    );
 
-    return res.status(201).json(data);
+    res.status(201).json({
+      id: resultado.lastID,
+      id_usuario,
+      nome_cliente,
+      descricao,
+      prioridade: prioridade || 'Média',
+      status: status || 'Pendente'
+    });
 
   } catch (erro) {
     console.error('[demandas.criar]', erro);
 
-    return res.status(500).json({
+    res.status(500).json({
       mensagem: 'Erro ao salvar demanda.'
     });
   }
 }
 
 export async function atualizar(req, res) {
-  const id = Number(req.params.id);
+  const idDemanda = Number(req.params.id);
 
-  const { nome_cliente, descricao, prioridade, status } = req.body;
+  const {
+    nome_cliente,
+    descricao,
+    prioridade,
+    status
+  } = req.body;
 
   try {
-    const { data: atual, error: errFind } = await supabase
-      .from('demandas')
-      .select('*')
-      .eq('id', id)
-      .single();
+    const db = await getDatabase();
 
-    if (errFind || !atual) {
-      return res.status(404).json({ mensagem: 'Demanda não encontrada.' });
+    const atual = await db.get(
+      'SELECT * FROM demandas WHERE id = ?',
+      [idDemanda]
+    );
+
+    if (!atual) {
+      return res.status(404).json({
+        mensagem: 'Demanda não encontrada.'
+      });
     }
 
-    const { data, error } = await supabase
-      .from('demandas')
-      .update({
-        nome_cliente: nome_cliente ?? atual.nome_cliente,
-        descricao: descricao ?? atual.descricao,
-        prioridade: prioridade ?? atual.prioridade,
-        status: status ?? atual.status
-      })
-      .eq('id', id)
-      .select()
-      .single();
+    const novoNomeCliente = nome_cliente ?? atual.nome_cliente;
+    const novaDescricao = descricao ?? atual.descricao;
+    const novaPrioridade = prioridade ?? atual.prioridade;
+    const novoStatus = status ?? atual.status;
 
-    if (error) {
-      return res.status(400).json({ mensagem: error.message });
-    }
+    await db.run(
+      `UPDATE demandas
+       SET nome_cliente = ?,
+           descricao = ?,
+           prioridade = ?,
+           status = ?
+       WHERE id = ?`,
+      [
+        novoNomeCliente,
+        novaDescricao,
+        novaPrioridade,
+        novoStatus,
+        idDemanda
+      ]
+    );
 
-    return res.json(data);
+    res.json({
+      id: idDemanda,
+      nome_cliente: novoNomeCliente,
+      descricao: novaDescricao,
+      prioridade: novaPrioridade,
+      status: novoStatus
+    });
 
   } catch (erro) {
     console.error('[demandas.atualizar]', erro);
-    return res.status(500).json({ mensagem: 'Erro ao atualizar demanda.' });
+
+    res.status(500).json({
+      mensagem: 'Erro ao atualizar demanda.'
+    });
   }
 }
 
 export async function remover(req, res) {
-  const id = Number(req.params.id);
+  const idDemanda = Number(req.params.id);
 
   try {
-    const { data: demanda, error: errFind } = await supabase
-      .from('demandas')
-      .select('id_usuario')
-      .eq('id', id)
-      .single();
+    const db = await getDatabase();
 
-    if (errFind || !demanda) {
-      return res.status(404).json({ mensagem: 'Demanda não encontrada.' });
+    const demanda = await db.get(
+      'SELECT id_usuario FROM demandas WHERE id = ?',
+      [idDemanda]
+    );
+
+    if (!demanda) {
+      return res.status(404).json({
+        mensagem: 'Demanda não encontrada.'
+      });
     }
 
     if (demanda.id_usuario !== req.usuarioId) {
@@ -167,19 +193,26 @@ export async function remover(req, res) {
       });
     }
 
-    const { error } = await supabase
-      .from('demandas')
-      .delete()
-      .eq('id', id);
+    const resultado = await db.run(
+      'DELETE FROM demandas WHERE id = ?',
+      [idDemanda]
+    );
 
-    if (error) {
-      return res.status(400).json({ mensagem: error.message });
+    if (resultado.changes === 0) {
+      return res.status(404).json({
+        mensagem: 'Demanda não encontrada.'
+      });
     }
 
-    return res.json({ mensagem: 'Demanda removida com sucesso.' });
+    res.json({
+      mensagem: 'Demanda removida com sucesso.'
+    });
 
   } catch (erro) {
     console.error('[demandas.remover]', erro);
-    return res.status(500).json({ mensagem: 'Erro ao remover demanda.' });
+
+    res.status(500).json({
+      mensagem: 'Erro ao remover demanda.'
+    });
   }
 }
