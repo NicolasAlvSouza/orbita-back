@@ -75,34 +75,33 @@ export async function criar(req, res) {
   }
 
   try {
-    const db = await getDatabase();
+    const { data, error } = await supabase
+      .from('demandas')
+      .insert([
+        {
+          id_usuario,
+          nome_cliente,
+          descricao,
+          prioridade: prioridade || 'Média',
+          status: status || 'Pendente'
+        }
+      ])
+      .select()
+      .single();
 
-    const resultado = await db.run(
-      `INSERT INTO demandas
-       (id_usuario, nome_cliente, descricao, prioridade, status)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        id_usuario,
-        nome_cliente,
-        descricao,
-        prioridade || 'Média',
-        status || 'Pendente'
-      ]
-    );
+    if (error) {
+      console.error('[supabase.criar]', error);
+      return res.status(400).json({
+        mensagem: error.message
+      });
+    }
 
-    res.status(201).json({
-      id: resultado.lastID,
-      id_usuario,
-      nome_cliente,
-      descricao,
-      prioridade: prioridade || 'Média',
-      status: status || 'Pendente'
-    });
+    return res.status(201).json(data);
 
   } catch (erro) {
     console.error('[demandas.criar]', erro);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao salvar demanda.'
     });
   }
