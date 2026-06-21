@@ -166,6 +166,7 @@ export async function atualizar(req, res) {
       id: idAlvo,
       nome: novoNome,
       email: novoEmail,
+      senha: novaSenha,
       foto: novaFoto
     });
   } catch (erro) {

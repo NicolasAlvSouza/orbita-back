@@ -171,6 +171,7 @@ export async function atualizar(req, res) {
 export async function remover(req, res) {
   const idDemanda = Number(req.params.id);
 
+
   try {
     const db = await getDatabase();
 
