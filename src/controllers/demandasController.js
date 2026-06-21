@@ -60,43 +60,35 @@ export async function buscarPorId(req, res) {
 }
 
 export async function criar(req, res) {
-  const {
-    id_usuario,
-    nome_cliente,
-    descricao,
-    prioridade,
-    status
-  } = req.body;
+  const {nome_cliente, descricao, prioridade, status} = req.body;
 
-  if (!nome_cliente || !descricao) {
+  if (!nome_cliente) {
     return res.status(400).json({
-      mensagem: 'Campos obrigatórios ausentes.'
+      mensagem: 'Campo obrigatório ausente.'
     });
   }
 
   try {
     const db = await getDatabase();
 
-    const resultado = await db.run(
-      `INSERT INTO demandas
-       (id_usuario, nome_cliente, descricao, prioridade, status)
-       VALUES ($1, $2, $3, $4, $5)`,
+    const resultado = await db.get(
+      `INSERT INTO demandas (nome_cliente, descricao, prioridade, status)
+       VALUES ($1, $2, $3, $4)`,
       [
-        id_usuario,
         nome_cliente,
         descricao,
         prioridade || 'Média',
-        status || 'Pendente'
+        status || 'Novo'
       ]
     );
 
     res.status(201).json({
       id: resultado.lastID,
-      id_usuario,
+      id_usuario: req.usuarioId,
       nome_cliente,
       descricao,
       prioridade: prioridade || 'Média',
-      status: status || 'Pendente'
+      status: status || 'Novo'
     });
 
   } catch (erro) {
@@ -110,6 +102,11 @@ export async function criar(req, res) {
 
 export async function atualizar(req, res) {
   const idDemanda = Number(req.params.id);
+
+  if (idDemanda !== req.usuarioId) {
+    return res.status(403).json({
+      mensagem: 'Você só pode editar suas próprias demandas.'
+    });
 
   const {
     nome_cliente,
