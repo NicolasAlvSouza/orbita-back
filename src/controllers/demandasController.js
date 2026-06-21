@@ -80,7 +80,7 @@ export async function criar(req, res) {
     const resultado = await db.run(
       `INSERT INTO demandas
        (id_usuario, nome_cliente, descricao, prioridade, status)
-       VALUES (?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5)`,
       [
         id_usuario,
         nome_cliente,
