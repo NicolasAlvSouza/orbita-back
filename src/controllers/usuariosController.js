@@ -74,17 +74,28 @@ export async function criar(req, res) {
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
 
     const usuario = await db.get(
-      `
-      INSERT INTO usuarios (nome, email, senha)
-      VALUES ($1, $2, $3)
-      RETURNING id, nome, email, foto`,[
-        nome,
-        email,
-        senhaHash
-      ]
-    );
+  `
+  INSERT INTO usuarios (
+    nome,
+    email,
+    senha
+  )
+  VALUES (
+    $1,
+    $2,
+    $3
+  )
+  RETURNING id, nome, email, foto
+  `,
+  [nome, email, senhaHash]
+);
 
-    res.status(201).json({ id: resultado.lastID, nome, email, senhaHash, foto: null });
+    res.status(201).json({
+  id: usuario.id,
+  nome: usuario.nome,
+  email: usuario.email,
+  foto: usuario.foto
+});
 
   } catch (erro) {
 
