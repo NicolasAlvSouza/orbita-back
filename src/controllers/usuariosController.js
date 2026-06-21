@@ -57,11 +57,11 @@ export async function criar(req, res) {
   const { nome, email, senha } = req.body;
 
   if (!nome || !email || !senha) {
-    return res.status(400).json({ mensagem: 'Campos obrigatórios ausentes.' });
+    return res.status(400).json({
+      mensagem: 'Campos obrigatórios ausentes.'
+    });
   }
 
-  // validação simples — exemplo didático para o aluno entender que toda
-  // entrada do usuário precisa passar por verificação no servidor.
   if (typeof senha !== 'string' || senha.length < 6) {
     return res.status(400).json({
       mensagem: 'A senha deve ter pelo menos 6 caracteres.'
@@ -71,28 +71,34 @@ export async function criar(req, res) {
   try {
     const db = await getDatabase();
 
-    // bcrypt.hash → guarda HASH, não a senha em texto puro (UC3 Bloco C / Aula 3)
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
 
-    const resultado = await db.run(
-      'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?, ?)',
-      [nome, email, senhaHash]
+    const usuario = await db.get(
+      `
+      INSERT INTO usuarios (nome, email, senha)
+      VALUES ($1, $2, $3)
+      RETURNINGid, nome, email, foto`,[
+        nome,
+        email,
+        senhaHash
+      ]
     );
 
-    res.status(201).json({
-      id: resultado.lastID,
-      nome,
-      email,
-      foto: null
-    });
+    res.status(201).json({ id: resultado.lastID, nome, email, senhaHash, foto: null });
+
   } catch (erro) {
-    // a coluna email tem UNIQUE no CREATE TABLE — tratamos o erro
-    // de violação dessa restrição como 409 Conflict.
+
     if (ehErroEmailDuplicado(erro)) {
-      return res.status(409).json({ mensagem: 'Este e-mail já está cadastrado.' });
+      return res.status(409).json({
+        mensagem: 'Este e-mail já está cadastrado.'
+      });
     }
+
     console.error('[usuarios.criar]', erro);
-    res.status(500).json({ mensagem: 'Erro ao salvar usuário.' });
+
+    return res.status(500).json({
+      mensagem: 'Erro ao salvar usuário.'
+    });
   }
 }
 
