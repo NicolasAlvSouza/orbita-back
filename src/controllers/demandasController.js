@@ -6,16 +6,21 @@ import { processarUploadImagem } from '../middlewares/uploadImagem.js';
 export const listar = async (req, res) => {
   try {
     const db = await getDatabase();
-    const demandas = await db.all(`SELECT * FROM demandas ORDER BY data_criacao DESC`);
-    res.json(demandas);
-   
-    res.status(200).json(result.rows);
+
+    const demandas = await db.all(
+      `SELECT * FROM demandas ORDER BY data_criacao DESC`
+    );
+
+    return res.status(200).json(demandas);
+
   } catch (error) {
-    console.error(error);
-    console.error('[demandas.listarDemandas]', erro);
-    res.status(500).json({ mensagem: 'Erro ao buscar demandas.' });
+    console.error('[demandas.listar]', error);
+
+    return res.status(500).json({
+      mensagem: 'Erro ao buscar demandas.'
+    });
   }
-}
+};
 
 export async function buscarPorId(req, res) {
   const { id } = req.params;
@@ -43,12 +48,12 @@ export async function buscarPorId(req, res) {
       });
     }
 
-    res.json(demanda);
+    return res.status(200).json(demanda);
 
-  } catch (erro) {
-    console.error('[demandas.buscarDemandaPorId]', erro);
+  } catch (error) {
+    console.error('[demandas.buscarPorId]', error);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao buscar demanda.'
     });
   }
