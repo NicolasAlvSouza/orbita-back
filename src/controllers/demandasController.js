@@ -61,6 +61,8 @@ export async function buscarPorId(req, res) {
 
 export async function criar(req, res) {
   const {id_usuario, nome_cliente, descricao, prioridade, status} = req.body;
+  console.log('BODY:', req.body);
+  console.log('USUARIO:', req.usuarioId);
 
   if (!nome_cliente) {
     return res.status(400).json({
