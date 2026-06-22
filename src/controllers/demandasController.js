@@ -60,14 +60,14 @@ export async function buscarPorId(req, res) {
 }
 
 export async function criar(req, res) {
-  const { nome_cliente, descricao, prioridade, status } = req.body;
-  const id_usuario = req.usuarioId;
+  const {
+    nome_cliente,
+    descricao,
+    prioridade,
+    status
+  } = req.body;
 
-  if (!id_usuario) {
-    return res.status(401).json({
-      mensagem: 'Usuário não autenticado.'
-    });
-  }
+  const id_usuario = req.usuarioId; // 🔥 AQUI É A CORREÇÃO PRINCIPAL
 
   if (!nome_cliente) {
     return res.status(400).json({
@@ -78,19 +78,9 @@ export async function criar(req, res) {
   try {
     const db = await getDatabase();
 
-    const demanda = await db.get(
-      `
-  INSERT INTO demandas
-  (
-    id_usuario,
-    nome_cliente,
-    descricao,
-    prioridade,
-    status
-  )
-  VALUES ($1,$2,$3,$4,$5)
-  RETURNING *
-  `,
+    const resultado = await db.run(
+      `INSERT INTO demandas (id_usuario, nome_cliente, descricao, prioridade, status)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         id_usuario,
         nome_cliente,
@@ -100,7 +90,14 @@ export async function criar(req, res) {
       ]
     );
 
-    res.status(201).json(demanda);
+    res.status(201).json({
+      id: resultado.lastID,
+      id_usuario,
+      nome_cliente,
+      descricao,
+      prioridade,
+      status
+    });
 
   } catch (erro) {
     console.error('[demandas.criar]', erro);

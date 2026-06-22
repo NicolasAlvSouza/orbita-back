@@ -7,7 +7,7 @@ const router = Router();
 
 router.use(autenticarJWT);
 
-router.get('/', controller.listar);
+router.get('/', autenticarJWT, controller.listar);
 router.get('/:id', autenticarJWT, controller.buscarPorId);
 router.post('/', autenticarJWT, controller.criar);
 router.put('/:id', autenticarJWT, controller.atualizar);
