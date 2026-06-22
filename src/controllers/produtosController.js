@@ -57,7 +57,6 @@ export async function buscarPorId(req, res) {
 export async function criar(req, res) {
   const {
     nome,
-    descricao,
     preco
   } = req.body;
 
@@ -72,11 +71,10 @@ export async function criar(req, res) {
 
     const resultado = await db.run(
       `INSERT INTO produtos
-       (nome, descricao, preco, id_usuario)
-       VALUES (?, ?, ?, ?)`,
+       (nome, preco, id_usuario)
+       VALUES (?, ?, ?)`,
       [
         nome,
-        descricao || null,
         preco,
         req.usuarioId
       ]
@@ -85,7 +83,6 @@ export async function criar(req, res) {
     res.status(201).json({
       id: resultado.lastID,
       nome,
-      descricao,
       preco,
       id_usuario: req.usuarioId
     });
@@ -124,18 +121,15 @@ export async function atualizar(req, res) {
     }
 
     const novoNome = req.body.nome ?? atual.nome;
-    const novaDescricao = req.body.descricao ?? atual.descricao;
     const novoPreco = req.body.preco ?? atual.preco;
 
     await db.run(
       `UPDATE produtos
        SET nome = ?,
-           descricao = ?,
-           preco = ?
+           preco = ?,
        WHERE id = ?`,
       [
         novoNome,
-        novaDescricao,
         novoPreco,
         idProduto
       ]
@@ -144,7 +138,6 @@ export async function atualizar(req, res) {
     res.json({
       id: idProduto,
       nome: novoNome,
-      descricao: novaDescricao,
       preco: novoPreco
     });
 
@@ -156,7 +149,6 @@ export async function atualizar(req, res) {
     });
   }
 }
-
 export async function remover(req, res) {
   const idProduto = Number(req.params.id);
 
