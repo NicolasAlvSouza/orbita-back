@@ -120,10 +120,9 @@ export async function buscarPorId(req, res) {
       });
     }
 
-    // segurança: valida dono da demanda
     if (registros[0].id_usuario !== req.usuarioId) {
       return res.status(403).json({
-        mensagem: 'Você não tem permissão para visualizar esta demanda.'
+        mensagem: 'Sem permissão.'
       });
     }
 
