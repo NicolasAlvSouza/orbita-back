@@ -134,7 +134,11 @@ export async function atualizar(req, res) {
     }
 
     // 2. validar dono correto
-    if (atual.id_usuario !== req.usuarioId) {
+    if (!atual || atual.id_usuario !== req.usuarioId) {
+      return res.status(403).json({
+        mensagem: 'Você não pode editar esta demanda.'
+      });
+    } if (atual.id_usuario !== req.usuarioId) {
       return res.status(403).json({
         mensagem: 'Você só pode editar suas próprias demandas.'
       });
