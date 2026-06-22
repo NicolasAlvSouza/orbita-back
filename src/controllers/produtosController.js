@@ -126,7 +126,7 @@ export async function atualizar(req, res) {
     await db.run(
       `UPDATE produtos
        SET nome = ?,
-           preco = ?,
+           preco = ?
        WHERE id = ?`,
       [
         novoNome,
@@ -149,6 +149,7 @@ export async function atualizar(req, res) {
     });
   }
 }
+
 export async function remover(req, res) {
   const idProduto = Number(req.params.id);
 
