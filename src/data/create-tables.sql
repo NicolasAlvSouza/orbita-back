@@ -41,16 +41,27 @@ CREATE TABLE IF NOT EXISTS demandas (
 );
 
 -- TABELA INTERMEDIÁRIA
-CREATE TABLE IF NOT EXISTS demanda_produto (
-    id          INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    id_demanda  INTEGER NOT NULL,
-    id_produto  INTEGER NOT NULL,
+CREATE TABLE demanda_produtos (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    CONSTRAINT fk_dp_demanda
-        FOREIGN KEY (id_demanda)
-        REFERENCES demandas(id),
+    demanda_id INTEGER NOT NULL,
+    produto_id INTEGER NOT NULL,
 
-    CONSTRAINT fk_dp_produto
-        FOREIGN KEY (id_produto)
+    quantidade INTEGER NOT NULL DEFAULT 1,
+
+    valor_unitario NUMERIC(10,2),
+
+    observacao TEXT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_demanda
+        FOREIGN KEY (demanda_id)
+        REFERENCES demandas(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_produto
+        FOREIGN KEY (produto_id)
         REFERENCES produtos(id)
+        ON DELETE CASCADE
 );

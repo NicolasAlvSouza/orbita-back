@@ -5,49 +5,51 @@ import { processarUploadImagem } from '../middlewares/uploadImagem.js';
 
 export async function listar(req, res) {
   try {
-    const db = await getDatabase();
-
     const registros = await db.all(`
-      SELECT
-        d.id,
-        d.nome_cliente,
-        d.descricao,
-        d.prioridade,
-        d.status,
-        d.data_criacao,
+  SELECT
+    d.id,
+    d.nome_cliente,
+    d.descricao,
+    d.prioridade,
+    d.status,
+    d.data_criacao,
 
-        p.id AS produto_id,
-        p.nome AS produto_nome,
-        p.descricao AS produto_descricao,
-        p.preco AS produto_preco
+    p.id AS produto_id,
+    p.nome AS produto_nome,
+    p.descricao AS produto_descricao,
+    p.preco AS produto_preco,
 
-      FROM demandas d
+    dp.quantidade,
+    dp.valor_unitario,
+    dp.observacao
 
-      LEFT JOIN demanda_produto dp
-        ON d.id = dp.id_demanda
+  FROM demandas d
 
-      LEFT JOIN produtos p
-        ON dp.id_produto = p.id
+  LEFT JOIN demanda_produtos dp
+    ON d.id = dp.demanda_id
 
-      WHERE d.id_usuario = ?
+  LEFT JOIN produtos p
+    ON dp.produto_id = p.id
 
-      ORDER BY d.id DESC
-    `, [req.usuarioId]);
+  WHERE d.id_usuario = ?
+
+  ORDER BY d.id DESC
+`, [req.usuarioId]);
 
     const demandasMap = {};
 
     for (const item of registros) {
 
       if (!demandasMap[item.id]) {
-        demandasMap[item.id] = {
-          id: item.id,
-          nome_cliente: item.nome_cliente,
-          descricao: item.descricao,
-          prioridade: item.prioridade,
-          status: item.status,
-          data_criacao: item.data_criacao,
-          produtos: []
-        };
+        demandasMap[item.id].produtos.push({
+          id: item.produto_id,
+          nome: item.produto_nome,
+          descricao: item.produto_descricao,
+          preco: item.produto_preco,
+          quantidade: item.quantidade,
+          valor_unitario: item.valor_unitario,
+          observacao: item.observacao
+        });
       }
 
       if (item.produto_id) {
@@ -55,7 +57,10 @@ export async function listar(req, res) {
           id: item.produto_id,
           nome: item.produto_nome,
           descricao: item.produto_descricao,
-          preco: item.produto_preco
+          preco: item.produto_preco,
+          quantidade: item.quantidade,
+          valor_unitario: item.valor_unitario,
+          observacao: item.observacao
         });
       }
     }
@@ -90,15 +95,19 @@ export async function buscarPorId(req, res) {
         p.id AS produto_id,
         p.nome AS produto_nome,
         p.descricao AS produto_descricao,
-        p.preco AS produto_preco
+        p.preco AS produto_preco,
+
+        dp.quantidade,
+        dp.valor_unitario,
+        dp.observacao
 
       FROM demandas d
 
-      LEFT JOIN demanda_produto dp
-        ON d.id = dp.id_demanda
+      LEFT JOIN demanda_produtos dp
+        ON d.id = dp.demanda_id
 
       LEFT JOIN produtos p
-        ON dp.id_produto = p.id
+        ON dp.produto_id = p.id
 
       WHERE d.id = ?
     `, [idDemanda]);
@@ -109,7 +118,7 @@ export async function buscarPorId(req, res) {
       });
     }
 
-    // Verifica se a demanda pertence ao usuário logado
+    // segurança: valida dono da demanda
     if (registros[0].id_usuario !== req.usuarioId) {
       return res.status(403).json({
         mensagem: 'Você não tem permissão para visualizar esta demanda.'
@@ -132,7 +141,10 @@ export async function buscarPorId(req, res) {
           id: item.produto_id,
           nome: item.produto_nome,
           descricao: item.produto_descricao,
-          preco: item.produto_preco
+          preco: item.produto_preco,
+          quantidade: item.quantidade,
+          valor_unitario: item.valor_unitario,
+          observacao: item.observacao
         });
       }
     }
@@ -150,13 +162,16 @@ export async function buscarPorId(req, res) {
 
 export async function criar(req, res) {
   const {
-    id_demanda,
-    id_produto
+    demanda_id,
+    produto_id,
+    quantidade,
+    valor_unitario,
+    observacao
   } = req.body;
 
-  if (!id_demanda || !id_produto) {
+  if (!demanda_id || !produto_id) {
     return res.status(400).json({
-      mensagem: 'Campos obrigatórios ausentes.'
+      mensagem: 'demanda_id e produto_id são obrigatórios.'
     });
   }
 
@@ -165,7 +180,7 @@ export async function criar(req, res) {
 
     const demanda = await db.get(
       'SELECT * FROM demandas WHERE id = ?',
-      [id_demanda]
+      [demanda_id]
     );
 
     if (!demanda) {
@@ -181,20 +196,35 @@ export async function criar(req, res) {
     }
 
     const resultado = await db.run(
-      `INSERT INTO demanda_produto
-       (id_demanda, id_produto)
-       VALUES (?, ?)`,
-      [id_demanda, id_produto]
+      `INSERT INTO demanda_produtos
+       (
+         demanda_id,
+         produto_id,
+         quantidade,
+         valor_unitario,
+         observacao
+       )
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        demanda_id,
+        produto_id,
+        quantidade || 1,
+        valor_unitario || null,
+        observacao || null
+      ]
     );
 
     res.status(201).json({
       id: resultado.lastID,
-      id_demanda,
-      id_produto
+      demanda_id,
+      produto_id,
+      quantidade,
+      valor_unitario,
+      observacao
     });
 
   } catch (erro) {
-    console.error('[demandaProduto.criar]', erro);
+    console.error('[demanda_produtos.criar]', erro);
 
     res.status(500).json({
       mensagem: 'Erro ao criar relacionamento.'
@@ -254,22 +284,37 @@ export async function atualizar(req, res) {
       ]
     );
 
-    // Atualiza os produtos da demanda
+    // ===============================
+    // ATUALIZA PRODUTOS DA DEMANDA
+    // ===============================
     if (Array.isArray(produtos)) {
 
-      // Remove os vínculos antigos
+      // remove antigos vínculos
       await db.run(
-        'DELETE FROM demanda_produto WHERE id_demanda = ?',
+        'DELETE FROM demanda_produtos WHERE demanda_id = ?',
         [idDemanda]
       );
 
-      // Cria os novos vínculos
-      for (const idProduto of produtos) {
+      // recria vínculos com novos dados
+      for (const produto of produtos) {
+
         await db.run(
-          `INSERT INTO demanda_produto
-           (id_demanda, id_produto)
-           VALUES (?, ?)`,
-          [idDemanda, idProduto]
+          `INSERT INTO demanda_produtos
+           (
+             demanda_id,
+             produto_id,
+             quantidade,
+             valor_unitario,
+             observacao
+           )
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            idDemanda,
+            produto.produto_id,
+            produto.quantidade || 1,
+            produto.valor_unitario || null,
+            produto.observacao || null
+          ]
         );
       }
     }
