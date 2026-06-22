@@ -60,9 +60,14 @@ export async function buscarPorId(req, res) {
 }
 
 export async function criar(req, res) {
-  const {id_usuario, nome_cliente, descricao, prioridade, status} = req.body;
-  console.log('BODY:', req.body);
-  console.log('USUARIO:', req.usuarioId);
+  const { nome_cliente, descricao, prioridade, status } = req.body;
+  const id_usuario = req.usuarioId;
+
+  if (!id_usuario) {
+    return res.status(401).json({
+      mensagem: 'Usuário não autenticado.'
+    });
+  }
 
   if (!nome_cliente) {
     return res.status(400).json({
@@ -73,26 +78,29 @@ export async function criar(req, res) {
   try {
     const db = await getDatabase();
 
-    const resultado = await db.get(
-      `INSERT INTO demandas (id_usuario, nome_cliente, descricao, prioridade, status)
-       VALUES ($1, $2, $3, $4, $5)`,
+    const demanda = await db.get(
+      `
+  INSERT INTO demandas
+  (
+    id_usuario,
+    nome_cliente,
+    descricao,
+    prioridade,
+    status
+  )
+  VALUES ($1,$2,$3,$4,$5)
+  RETURNING *
+  `,
       [
         id_usuario,
         nome_cliente,
         descricao,
-        prioridade || 'Média',
-        status || 'Novo'
+        prioridade || 'media',
+        status || 'novo'
       ]
     );
 
-    res.status(201).json({
-      id: resultado.lastID,
-      id_usuario: req.usuarioId,
-      nome_cliente,
-      descricao,
-      prioridade: prioridade || 'Média',
-      status: status || 'Novo'
-    });
+    res.status(201).json(demanda);
 
   } catch (erro) {
     console.error('[demandas.criar]', erro);
