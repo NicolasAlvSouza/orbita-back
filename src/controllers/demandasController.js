@@ -111,12 +111,6 @@ export async function criar(req, res) {
 export async function atualizar(req, res) {
   const idDemanda = Number(req.params.id);
 
-  if (idDemanda !== req.usuarioId) {
-    return res.status(403).json({
-      mensagem: 'Você só pode editar suas próprias demandas.'
-    });
-  }
-
   const {
     nome_cliente,
     descricao,
@@ -127,6 +121,7 @@ export async function atualizar(req, res) {
   try {
     const db = await getDatabase();
 
+    // 1. buscar demanda
     const atual = await db.get(
       'SELECT * FROM demandas WHERE id = ?',
       [idDemanda]
@@ -138,6 +133,14 @@ export async function atualizar(req, res) {
       });
     }
 
+    // 2. validar dono correto
+    if (atual.id_usuario !== req.usuarioId) {
+      return res.status(403).json({
+        mensagem: 'Você só pode editar suas próprias demandas.'
+      });
+    }
+
+    // 3. atualizar valores
     const novoNomeCliente = nome_cliente ?? atual.nome_cliente;
     const novaDescricao = descricao ?? atual.descricao;
     const novaPrioridade = prioridade ?? atual.prioridade;
