@@ -214,7 +214,7 @@ export async function criar(req, res) {
       ]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       id: resultado.lastID,
       demanda_id,
       produto_id,
@@ -226,7 +226,7 @@ export async function criar(req, res) {
   } catch (erro) {
     console.error('[demanda_produtos.criar]', erro);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao criar relacionamento.'
     });
   }
