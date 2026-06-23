@@ -33,11 +33,11 @@ export const listar = async (req, res) => {
         dp.observacao,
 
         p.nome AS produto_nome,
-        p.descricao AS produto_descricao,
         p.preco AS produto_preco
 
       FROM demanda_produtos dp
-      LEFT JOIN produtos p ON p.id = dp.produto_id
+      LEFT JOIN produtos p
+        ON p.id = dp.produto_id
       WHERE dp.demanda_id = ANY(?)
       `,
       [demandasIds]
