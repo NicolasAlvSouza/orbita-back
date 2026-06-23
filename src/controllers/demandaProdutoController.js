@@ -50,7 +50,8 @@ export async function listar(req, res) {
         };
       }
 
-      if (item.produto_id) {
+      // só adiciona se existir produto REAL
+      if (item.produto_id !== null) {
         demandasMap[item.id].produtos.push({
           produto_id: item.produto_id,
           nome: item.produto_nome,
