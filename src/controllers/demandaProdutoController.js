@@ -6,7 +6,8 @@ import { processarUploadImagem } from '../middlewares/uploadImagem.js';
 export async function listar(req, res) {
   try {
     const db = await getDatabase();
-<<<<<<< HEAD
+
+
 
     const registros = await db.all(
       `
@@ -35,7 +36,7 @@ export async function listar(req, res) {
       `,
       [req.usuarioId]
     );
-=======
+
 
     const registros = await db.all(`
       SELECT
@@ -67,7 +68,9 @@ export async function listar(req, res) {
 
       ORDER BY d.id DESC
     `, [req.usuarioId]);
->>>>>>> 435d50a3f612c5dd6cec9384c9f528088b144c04
+
+
+    
 
     const demandasMap = {};
 
