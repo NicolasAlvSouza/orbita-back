@@ -8,7 +8,8 @@ export const listar = async (req, res) => {
     const db = await getDatabase();
 
     const demandas = await db.all(
-      `SELECT * FROM demandas WHERE id = ? AND usuario_id = ? ORDER BY data_criacao DESC`
+      `SELECT * FROM demandas WHERE id_usuario = ? ORDER BY data_criacao DESC`,
+      [req.usuarioId]
     );
 
     return res.status(200).json(demandas);
@@ -39,8 +40,8 @@ export async function buscarPorId(req, res) {
           data_criacao
        FROM demandas
        WHERE id = ?
-    AND usuario_id = ?`,
-      [id]
+         AND id_usuario = ?`,
+      [id, req.usuarioId]
     );
 
     if (!demanda) {
@@ -144,8 +145,8 @@ export async function atualizar(req, res) {
 
     // 1. buscar demanda
     const atual = await db.get(
-      'DELETE FROM demandas WHERE id = ? AND usuario_id = ?',
-      [idDemanda]
+      `SELECT * FROM demandas WHERE id = ? AND id_usuario = ?`,
+      [idDemanda, req.usuarioId]
     );
 
     if (!atual) {
@@ -177,13 +178,14 @@ export async function atualizar(req, res) {
            descricao = ?,
            prioridade = ?,
            status = ?
-       DELETE FROM demandas WHERE id = ? AND usuario_id = ?`,
+       WHERE id = ? AND id_usuario = ?`,
       [
         novoNomeCliente,
         novaDescricao,
         novaPrioridade,
         novoStatus,
-        idDemanda
+        idDemanda,
+        req.usuarioId
       ]
     );
 
