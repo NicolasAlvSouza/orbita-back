@@ -6,6 +6,7 @@ import { processarUploadImagem } from '../middlewares/uploadImagem.js';
 export async function listar(req, res) {
   try {
     const db = await getDatabase();
+<<<<<<< HEAD
 
     const registros = await db.all(
       `
@@ -34,6 +35,39 @@ export async function listar(req, res) {
       `,
       [req.usuarioId]
     );
+=======
+
+    const registros = await db.all(`
+      SELECT
+        d.id,
+        d.nome_cliente,
+        d.descricao,
+        d.prioridade,
+        d.status,
+        d.data_criacao,
+
+        p.id AS produto_id,
+        p.nome AS produto_nome,
+        p.descricao AS produto_descricao,
+        p.preco AS produto_preco,
+
+        dp.quantidade,
+        dp.valor_unitario,
+        dp.observacao
+
+      FROM demandas d
+
+      LEFT JOIN demanda_produtos dp
+        ON d.id = dp.demanda_id
+
+      LEFT JOIN produtos p
+        ON dp.produto_id = p.id
+
+      WHERE d.id_usuario = ?
+
+      ORDER BY d.id DESC
+    `, [req.usuarioId]);
+>>>>>>> 435d50a3f612c5dd6cec9384c9f528088b144c04
 
     const demandasMap = {};
 
@@ -112,10 +146,9 @@ export async function buscarPorId(req, res) {
       });
     }
 
-    // segurança: valida dono da demanda
     if (registros[0].id_usuario !== req.usuarioId) {
       return res.status(403).json({
-        mensagem: 'Você não tem permissão para visualizar esta demanda.'
+        mensagem: 'Sem permissão.'
       });
     }
 
@@ -208,7 +241,7 @@ export async function criar(req, res) {
       ]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       id: resultado.lastID,
       demanda_id,
       produto_id,
@@ -220,7 +253,7 @@ export async function criar(req, res) {
   } catch (erro) {
     console.error('[demanda_produtos.criar]', erro);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao criar relacionamento.'
     });
   }
