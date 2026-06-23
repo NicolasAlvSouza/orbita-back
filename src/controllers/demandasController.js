@@ -17,30 +17,45 @@ export const listar = async (req, res) => {
       [req.usuarioId]
     );
 
-    for (const demanda of demandas) {
-      demanda.produtos = await db.all(
-        `
-        SELECT
-          dp.produto_id,
-          dp.quantidade,
-          dp.valor_unitario,
-          dp.observacao,
+    const demandasIds = demandas.map(d => d.id);
 
-          p.nome AS produto_nome,
-          p.descricao AS produto_descricao,
-          p.preco AS produto_preco
-
-        FROM demanda_produtos dp
-        LEFT JOIN produtos p
-          ON p.id = dp.produto_id
-
-        WHERE dp.demanda_id = ?
-        `,
-        [demanda.id]
-      );
+    if (demandasIds.length === 0) {
+      return res.status(200).json([]);
     }
 
-    return res.status(200).json(demandas);
+    const produtos = await db.all(
+      `
+      SELECT
+        dp.demanda_id,
+        dp.produto_id,
+        dp.quantidade,
+        dp.valor_unitario,
+        dp.observacao,
+
+        p.nome AS produto_nome,
+        p.descricao AS produto_descricao,
+        p.preco AS produto_preco
+
+      FROM demanda_produtos dp
+      LEFT JOIN produtos p ON p.id = dp.produto_id
+      WHERE dp.demanda_id = ANY(?)
+      `,
+      [demandasIds]
+    );
+
+    const demandasMap = demandas.map(d => ({
+      ...d,
+      produtos: []
+    }));
+
+    for (const produto of produtos) {
+      const demanda = demandasMap.find(d => d.id === produto.demanda_id);
+      if (demanda) {
+        demanda.produtos.push(produto);
+      }
+    }
+
+    return res.status(200).json(demandasMap);
 
   } catch (error) {
     console.error('[demandas.listar]', error);
