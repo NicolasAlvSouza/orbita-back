@@ -8,9 +8,37 @@ export const listar = async (req, res) => {
     const db = await getDatabase();
 
     const demandas = await db.all(
-      `SELECT * FROM demandas WHERE id_usuario = ? ORDER BY data_criacao DESC`,
+      `
+      SELECT *
+      FROM demandas
+      WHERE id_usuario = ?
+      ORDER BY data_criacao DESC
+      `,
       [req.usuarioId]
     );
+
+    for (const demanda of demandas) {
+      demanda.produtos = await db.all(
+        `
+        SELECT
+          dp.produto_id,
+          dp.quantidade,
+          dp.valor_unitario,
+          dp.observacao,
+
+          p.nome AS produto_nome,
+          p.descricao AS produto_descricao,
+          p.preco AS produto_preco
+
+        FROM demanda_produtos dp
+        LEFT JOIN produtos p
+          ON p.id = dp.produto_id
+
+        WHERE dp.demanda_id = ?
+        `,
+        [demanda.id]
+      );
+    }
 
     return res.status(200).json(demandas);
 
