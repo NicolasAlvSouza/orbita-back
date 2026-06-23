@@ -81,9 +81,9 @@ export async function criar(req, res) {
     senha
   )
   VALUES (
-    $1,
-    $2,
-    $3
+    ?,
+    ?,
+    ?
   )
   RETURNING id, nome, email, foto
   `,
