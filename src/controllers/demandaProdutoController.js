@@ -7,7 +7,8 @@ export async function listar(req, res) {
   try {
     const db = await getDatabase();
 
-    const registros = await db.all(`
+    const registros = await db.all(
+      `
       SELECT
         d.id,
         d.nome_cliente,
@@ -26,22 +27,17 @@ export async function listar(req, res) {
         dp.observacao
 
       FROM demandas d
-
-      LEFT JOIN demanda_produtos dp
-        ON d.id = dp.demanda_id
-
-      LEFT JOIN produtos p
-        ON dp.produto_id = p.id
-
+      LEFT JOIN demanda_produtos dp ON d.id = dp.demanda_id
+      LEFT JOIN produtos p ON dp.produto_id = p.id
       WHERE d.id_usuario = ?
-
       ORDER BY d.id DESC
-    `, [req.usuarioId]);
+      `,
+      [req.usuarioId]
+    );
 
     const demandasMap = {};
 
     for (const item of registros) {
-
       if (!demandasMap[item.id]) {
         demandasMap[item.id] = {
           id: item.id,
@@ -68,13 +64,9 @@ export async function listar(req, res) {
     }
 
     return res.json(Object.values(demandasMap));
-
   } catch (erro) {
     console.error('[demandas.listar]', erro);
-
-    return res.status(500).json({
-      mensagem: 'Erro ao listar demandas.'
-    });
+    return res.status(500).json({ mensagem: 'Erro ao listar demandas.' });
   }
 }
 
