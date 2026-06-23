@@ -5,56 +5,58 @@ import { processarUploadImagem } from '../middlewares/uploadImagem.js';
 
 export async function listar(req, res) {
   try {
+    const db = await getDatabase();
+
     const registros = await db.all(`
-  SELECT
-    d.id,
-    d.nome_cliente,
-    d.descricao,
-    d.prioridade,
-    d.status,
-    d.data_criacao,
+      SELECT
+        d.id,
+        d.nome_cliente,
+        d.descricao,
+        d.prioridade,
+        d.status,
+        d.data_criacao,
 
-    p.id AS produto_id,
-    p.nome AS produto_nome,
-    p.descricao AS produto_descricao,
-    p.preco AS produto_preco,
+        p.id AS produto_id,
+        p.nome AS produto_nome,
+        p.descricao AS produto_descricao,
+        p.preco AS produto_preco,
 
-    dp.quantidade,
-    dp.valor_unitario,
-    dp.observacao
+        dp.quantidade,
+        dp.valor_unitario,
+        dp.observacao
 
-  FROM demandas d
+      FROM demandas d
 
-  LEFT JOIN demanda_produtos dp
-    ON d.id = dp.demanda_id
+      LEFT JOIN demanda_produtos dp
+        ON d.id = dp.demanda_id
 
-  LEFT JOIN produtos p
-    ON dp.produto_id = p.id
+      LEFT JOIN produtos p
+        ON dp.produto_id = p.id
 
-  WHERE d.id_usuario = ?
+      WHERE d.id_usuario = ?
 
-  ORDER BY d.id DESC
-`, [req.usuarioId]);
+      ORDER BY d.id DESC
+    `, [req.usuarioId]);
 
     const demandasMap = {};
 
     for (const item of registros) {
 
       if (!demandasMap[item.id]) {
-        demandasMap[item.id].produtos.push({
-          id: item.produto_id,
-          nome: item.produto_nome,
-          descricao: item.produto_descricao,
-          preco: item.produto_preco,
-          quantidade: item.quantidade,
-          valor_unitario: item.valor_unitario,
-          observacao: item.observacao
-        });
+        demandasMap[item.id] = {
+          id: item.id,
+          nome_cliente: item.nome_cliente,
+          descricao: item.descricao,
+          prioridade: item.prioridade,
+          status: item.status,
+          data_criacao: item.data_criacao,
+          produtos: []
+        };
       }
 
       if (item.produto_id) {
         demandasMap[item.id].produtos.push({
-          id: item.produto_id,
+          produto_id: item.produto_id,
           nome: item.produto_nome,
           descricao: item.produto_descricao,
           preco: item.produto_preco,
@@ -65,12 +67,12 @@ export async function listar(req, res) {
       }
     }
 
-    res.json(Object.values(demandasMap));
+    return res.json(Object.values(demandasMap));
 
   } catch (erro) {
     console.error('[demandas.listar]', erro);
 
-    res.status(500).json({
+    return res.status(500).json({
       mensagem: 'Erro ao listar demandas.'
     });
   }
