@@ -134,7 +134,8 @@ export async function atualizar(req, res) {
     nome_cliente,
     descricao,
     prioridade,
-    status
+    status,
+    produtos
   } = req.body;
 
   try {
